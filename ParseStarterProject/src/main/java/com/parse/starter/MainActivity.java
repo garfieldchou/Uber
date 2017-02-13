@@ -31,6 +31,18 @@ public class MainActivity extends AppCompatActivity {
 
     Log.i("Switch value", String.valueOf(userTypeSwitch.isChecked()));
 
+    String userType = "rider";
+
+    if (userTypeSwitch.isChecked()) {
+
+      userType = "driver";
+
+    }
+
+    ParseUser.getCurrentUser().put("riderOrDriver", userType);
+
+    Log.i("Info", "Redirecting as " + userType);
+
   }
 
 
@@ -58,6 +70,13 @@ public class MainActivity extends AppCompatActivity {
           }
         }
       });
+    } else {
+
+      if (ParseUser.getCurrentUser().get("riderOrDriver") != null) {
+
+        Log.i("Info", "Redirecting as " + ParseUser.getCurrentUser().get("riderOrDriver"));
+
+      }
     }
 
     ParseAnalytics.trackAppOpenedInBackground(getIntent());
