@@ -25,13 +25,22 @@ import com.parse.SaveCallback;
 
 public class MainActivity extends AppCompatActivity {
 
+  public void getStarted (View view) {
+
+    Switch userTypeSwitch = (Switch) findViewById(R.id.userTypeSwitch);
+
+    Log.i("Switch value", String.valueOf(userTypeSwitch.isChecked()));
+
+  }
+
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    
+    getSupportActionBar().hide();
+
     ParseAnalytics.trackAppOpenedInBackground(getIntent());
   }
 
