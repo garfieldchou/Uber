@@ -41,6 +41,25 @@ public class MainActivity extends AppCompatActivity {
 
     getSupportActionBar().hide();
 
+    if (ParseUser.getCurrentUser() == null) {
+
+      ParseAnonymousUtils.logIn(new LogInCallback() {
+        @Override
+        public void done(ParseUser user, ParseException e) {
+
+          if (e == null) {
+
+            Log.i("Info", "Anonymous login successful");
+
+          } else {
+
+            Log.i("Info", "Anonymous login failed");
+
+          }
+        }
+      });
+    }
+
     ParseAnalytics.trackAppOpenedInBackground(getIntent());
   }
 
