@@ -27,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
 
   public void redirectActivity () {
 
-    if (ParseUser.getCurrentUser().get("riderOrDriver") == "rider") {
+    if (ParseUser.getCurrentUser().get("riderOrDriver").equals("rider")) {
 
       Intent intent = new Intent(getApplicationContext(), RiderActivity.class);
       startActivity(intent);
@@ -51,9 +51,14 @@ public class MainActivity extends AppCompatActivity {
 
     ParseUser.getCurrentUser().put("riderOrDriver", userType);
 
-    Log.i("Info", "Redirecting as " + userType);
+    ParseUser.getCurrentUser().saveInBackground(new SaveCallback() {
+      @Override
+      public void done(ParseException e) {
 
-    redirectActivity();
+        redirectActivity();
+
+      }
+    });
 
   }
 
