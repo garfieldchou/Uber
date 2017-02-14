@@ -1,11 +1,18 @@
 package com.parse.starter;
 
+import android.*;
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -21,6 +28,39 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
     LocationManager locationManager;
 
     LocationListener locationListener;
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == 1) {
+
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+
+                    Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+                    updateMap(lastKnownLocation);
+                }
+
+            }
+
+
+        }
+    }
+
+    public void updateMap (Location location) {
+
+        LatLng userLocation = new LatLng(location.getLatitude(), location.getLongitude());
+
+        mMap.clear();
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 15));
+        mMap.addMarker(new MarkerOptions().position(userLocation).title("Your location"));
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,11 +92,8 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
             @Override
             public void onLocationChanged(Location location) {
 
-                LatLng userLocation = new LatLng(location.getAltitude(), location.getLongitude());
+                updateMap(location);
 
-                mMap.clear();
-                mMap.moveCamera(CameraUpdateFactory.newLatLng(userLocation));
-                mMap.addMarker(new MarkerOptions().position(userLocation).title("Your location"));
             }
 
             @Override
@@ -74,6 +111,31 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
 
             }
         };
+
+        if (Build.VERSION.SDK_INT < 23) {
+
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+
+        } else {
+
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+
+            } else {
+
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+
+                Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+                if (lastKnownLocation != null) {
+
+                    updateMap(lastKnownLocation);
+
+                }
+
+            }
+        }
 
 
     }
