@@ -24,11 +24,15 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
 import com.parse.ParseObject;
+import com.parse.ParseQuery;
 import com.parse.ParseUser;
 import com.parse.SaveCallback;
+
+import java.util.List;
 
 public class RiderActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -40,42 +44,80 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
 
     Button callUberButton;
 
+    Boolean requestActive = false;
+
     public void callUber (View view) {
 
         Log.i("Info", "Call Uber");
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (requestActive) {
 
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+            ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("Request");
 
-            Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            query.whereEqualTo("username", ParseUser.getCurrentUser().getUsername());
 
-            if (lastKnownLocation != null) {
+            query.findInBackground(new FindCallback<ParseObject>() {
+                @Override
+                public void done(List<ParseObject> objects, ParseException e) {
 
-                ParseObject request = new ParseObject("request");
+                    if (e == null) {
 
-                request.put("username", ParseUser.getCurrentUser().getUsername());
+                        if (objects.size() > 0) {
 
-                ParseGeoPoint parseGeoPoint = new ParseGeoPoint(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+                            for (ParseObject object : objects) {
 
-                request.put("location", parseGeoPoint);
+                                object.deleteInBackground();
 
-                request.saveInBackground(new SaveCallback() {
-                    @Override
-                    public void done(ParseException e) {
+                            }
 
-                        if (e == null) {
-
-                            callUberButton.setText("Cancel Uber");
+                            requestActive = false;
+                            callUberButton.setText("Call An Uber");
 
                         }
                     }
-                });
+                }
+            });
 
-            } else {
 
-                Toast.makeText(this, "Could not find location. Please try again later.", Toast.LENGTH_SHORT).show();
-                
+        } else {
+
+
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+
+                Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+                if (lastKnownLocation != null) {
+
+                    ParseObject request = new ParseObject("Request");
+
+                    request.put("username", ParseUser.getCurrentUser().getUsername());
+
+                    ParseGeoPoint parseGeoPoint = new ParseGeoPoint(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+
+                    request.put("location", parseGeoPoint);
+
+                    request.saveInBackground(new SaveCallback() {
+                        @Override
+                        public void done(ParseException e) {
+
+                            if (e == null) {
+
+                                callUberButton.setText("Cancel Uber");
+                                requestActive = true;
+
+                            }
+                        }
+                    });
+
+
+                } else {
+
+                    Toast.makeText(this, "Could not find location. Please try again later.", Toast.LENGTH_SHORT).show();
+
+                }
+
             }
         }
 
@@ -126,6 +168,28 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
         mapFragment.getMapAsync(this);
 
         callUberButton = (Button) findViewById(R.id.callUberButton);
+
+        ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("Request");
+
+        query.whereEqualTo("username", ParseUser.getCurrentUser().getUsername());
+
+        query.findInBackground(new FindCallback<ParseObject>() {
+            @Override
+            public void done(List<ParseObject> objects, ParseException e) {
+
+                if (e == null) {
+
+                    if (objects.size() > 0) {
+
+                        requestActive = true;
+                        callUberButton.setText("Cancel Uber");
+
+                    }
+                }
+            }
+        });
+
+
     }
 
 
