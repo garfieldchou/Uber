@@ -32,6 +32,11 @@ public class MainActivity extends AppCompatActivity {
       Intent intent = new Intent(getApplicationContext(), RiderActivity.class);
       startActivity(intent);
 
+    } else {
+
+      Intent intent = new Intent(getApplicationContext(), ViewRequestsActivity.class);
+      startActivity(intent);
+      
     }
   }
 
