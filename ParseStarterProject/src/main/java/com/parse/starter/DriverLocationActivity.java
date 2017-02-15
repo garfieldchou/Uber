@@ -4,12 +4,17 @@ import android.content.Intent;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.util.ArrayList;
 
 public class DriverLocationActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -41,9 +46,25 @@ public class DriverLocationActivity extends FragmentActivity implements OnMapRea
 
         Intent intent = getIntent();
 
-        // Add a marker in Sydney and move the camera
         LatLng driverLocation = new LatLng(intent.getDoubleExtra("driverLatitude", 0), intent.getDoubleExtra("driverLongitude", 0));
-        mMap.addMarker(new MarkerOptions().position(driverLocation).title("Your Location"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(driverLocation));
+
+        LatLng requestLocation = new LatLng(intent.getDoubleExtra("requestLatitude", 0), intent.getDoubleExtra("requestLongitude", 0));
+
+        ArrayList<Marker> markers = new ArrayList<>();
+
+        markers.add(mMap.addMarker(new MarkerOptions().position(driverLocation).title("Your Location")));
+        markers.add(mMap.addMarker(new MarkerOptions().position(requestLocation).title("Request Location")));
+
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        for (Marker marker : markers) {
+            builder.include(marker.getPosition());
+        }
+        LatLngBounds bounds = builder.build();
+
+        int padding = 30; // offset from edges of the map in pixels
+        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+
+        mMap.animateCamera(cu);
+                
     }
 }
