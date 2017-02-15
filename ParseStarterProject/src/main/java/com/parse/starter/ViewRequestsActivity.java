@@ -3,6 +3,7 @@ package com.parse.starter;
 import android.*;
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -14,6 +15,8 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -31,6 +34,9 @@ public class ViewRequestsActivity extends AppCompatActivity {
     ListView requestListView;
     ArrayList<String> requests = new ArrayList<String>();
     ArrayAdapter arrayAdapter;
+
+    ArrayList<Double> requestLatitudes = new ArrayList<Double>();
+    ArrayList<Double> requestLongitudes = new ArrayList<Double>();
 
     LocationManager locationManager;
 
@@ -53,16 +59,27 @@ public class ViewRequestsActivity extends AppCompatActivity {
                     if (e == null) {
 
                         requests.clear();
+                        requestLatitudes.clear();
+                        requestLongitudes.clear();
 
                         if (objects.size() > 0) {
 
                             for (ParseObject object : objects) {
 
-                                Double distanceInMiles = geoPointLocation.distanceInMilesTo((ParseGeoPoint) object.get("location"));
+                                ParseGeoPoint requestLocation = (ParseGeoPoint) object.get("location");
 
-                                Double distanceOneDP = (double) Math.round(distanceInMiles * 10) / 10;
+                                if (requestLocation != null) {
 
-                                requests.add(distanceOneDP.toString() + " miles");
+                                    Double distanceInMiles = geoPointLocation.distanceInMilesTo(requestLocation);
+
+                                    Double distanceOneDP = (double) Math.round(distanceInMiles * 10) / 10;
+
+                                    requests.add(distanceOneDP.toString() + " miles");
+
+                                    requestLatitudes.add(requestLocation.getLatitude());
+                                    requestLongitudes.add(requestLocation.getLongitude());
+
+                                }
 
                             }
 
@@ -121,6 +138,31 @@ public class ViewRequestsActivity extends AppCompatActivity {
         requests.add("Getting nearby requests...");
 
         requestListView.setAdapter(arrayAdapter);
+
+        requestListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+
+                if (Build.VERSION.SDK_INT < 23 || ContextCompat.checkSelfPermission(ViewRequestsActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
+                    Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+                    if (requestLatitudes.size() > i && requestLongitudes.size() > i && lastKnownLocation != null) {
+
+                        Intent intent = new Intent(getApplicationContext(), DriverLocationActivity.class);
+
+                        intent.putExtra("requestLatitude", requestLatitudes.get(i));
+                        intent.putExtra("requestLongitude", requestLongitudes.get(i));
+                        intent.putExtra("driverLatitude", lastKnownLocation.getLatitude());
+                        intent.putExtra("driverLongitude", lastKnownLocation.getLongitude());
+
+                        startActivity(intent);
+
+                    }
+                }
+
+            }
+        });
 
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
