@@ -5,6 +5,8 @@ import android.net.Uri;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewTreeObserver;
+import android.widget.RelativeLayout;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -77,9 +79,39 @@ public class DriverLocationActivity extends FragmentActivity implements OnMapRea
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_driver_location);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+
+        intent = getIntent();
+
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        RelativeLayout mapLayout = (RelativeLayout) findViewById(R.id.mapRelativeLayout);
+        mapLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+
+                LatLng driverLocation = new LatLng(intent.getDoubleExtra("driverLatitude", 0), intent.getDoubleExtra("driverLongitude", 0));
+
+                LatLng requestLocation = new LatLng(intent.getDoubleExtra("requestLatitude", 0), intent.getDoubleExtra("requestLongitude", 0));
+
+                ArrayList<Marker> markers = new ArrayList<>();
+
+                markers.add(mMap.addMarker(new MarkerOptions().position(driverLocation).title("Your Location")));
+                markers.add(mMap.addMarker(new MarkerOptions().position(requestLocation).title("Request Location")));
+
+                LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                for (Marker marker : markers) {
+                    builder.include(marker.getPosition());
+                }
+                LatLngBounds bounds = builder.build();
+
+                int padding = 30; // offset from edges of the map in pixels
+                CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+
+                mMap.animateCamera(cu);
+            }
+        });
     }
 
 
@@ -96,27 +128,5 @@ public class DriverLocationActivity extends FragmentActivity implements OnMapRea
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        intent = getIntent();
-
-        LatLng driverLocation = new LatLng(intent.getDoubleExtra("driverLatitude", 0), intent.getDoubleExtra("driverLongitude", 0));
-
-        LatLng requestLocation = new LatLng(intent.getDoubleExtra("requestLatitude", 0), intent.getDoubleExtra("requestLongitude", 0));
-
-        ArrayList<Marker> markers = new ArrayList<>();
-
-        markers.add(mMap.addMarker(new MarkerOptions().position(driverLocation).title("Your Location")));
-        markers.add(mMap.addMarker(new MarkerOptions().position(requestLocation).title("Request Location")));
-
-        LatLngBounds.Builder builder = new LatLngBounds.Builder();
-        for (Marker marker : markers) {
-            builder.include(marker.getPosition());
-        }
-        LatLngBounds bounds = builder.build();
-
-        int padding = 30; // offset from edges of the map in pixels
-        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
-
-        mMap.animateCamera(cu);
-                
     }
 }
