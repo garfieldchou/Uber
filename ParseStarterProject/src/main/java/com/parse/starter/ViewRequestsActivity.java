@@ -52,6 +52,8 @@ public class ViewRequestsActivity extends AppCompatActivity {
 
             query.whereNear("location", geoPointLocation);
 
+            query.whereDoesNotExist("driverUsername");
+
             query.setLimit(10);
 
             query.findInBackground(new FindCallback<ParseObject>() {
