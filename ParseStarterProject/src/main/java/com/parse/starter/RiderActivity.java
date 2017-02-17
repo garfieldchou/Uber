@@ -9,6 +9,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
@@ -17,6 +18,7 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -46,6 +48,45 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
     Button callUberButton;
 
     Boolean requestActive = false;
+
+    Handler handler = new Handler();
+
+    TextView infoTextView;
+
+    public void checkForUpdates() {
+
+        ParseQuery<ParseObject> query = ParseQuery.getQuery("Request");
+
+        query.whereEqualTo("username", ParseUser.getCurrentUser().getUsername());
+
+        query.whereExists("driverUsername");
+
+        query.findInBackground(new FindCallback<ParseObject>() {
+            @Override
+            public void done(List<ParseObject> objects, ParseException e) {
+
+                if (e == null && objects.size() > 0) {
+
+                    infoTextView.setText("Your driver is on the way!");
+
+                    callUberButton.setVisibility(View.INVISIBLE);
+
+                }
+
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        checkForUpdates();
+
+                    }
+                }, 2000);
+
+            }
+        });
+
+
+    }
 
     public void logout (View view) {
 
@@ -117,6 +158,8 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
                                 callUberButton.setText("Cancel Uber");
                                 requestActive = true;
 
+                                checkForUpdates();
+
                             }
                         }
                     });
@@ -179,6 +222,8 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
 
         callUberButton = (Button) findViewById(R.id.callUberButton);
 
+        infoTextView = (TextView) findViewById(R.id.infoTextView);
+
         ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("Request");
 
         query.whereEqualTo("username", ParseUser.getCurrentUser().getUsername());
@@ -193,6 +238,8 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
 
                         requestActive = true;
                         callUberButton.setText("Cancel Uber");
+
+                        checkForUpdates();
 
                     }
                 }
