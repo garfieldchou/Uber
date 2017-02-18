@@ -67,7 +67,37 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
 
                 if (e == null && objects.size() > 0) {
 
-                    infoTextView.setText("Your driver is on the way!");
+                    ParseQuery<ParseUser> query = ParseUser.getQuery();
+
+                    query.whereEqualTo("username", objects.get(0).getString("driverUsername"));
+
+                    query.findInBackground(new FindCallback<ParseUser>() {
+                        @Override
+                        public void done(List<ParseUser> objects, ParseException e) {
+
+                            if (e == null && objects.size() > 0) {
+
+                                ParseGeoPoint driverLocation = objects.get(0).getParseGeoPoint("location");
+
+                                if (Build.VERSION.SDK_INT < 23 || ContextCompat.checkSelfPermission(RiderActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
+                                    Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+                                    if (lastKnownLocation != null) {
+
+                                        ParseGeoPoint userLocation = new ParseGeoPoint(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+
+                                        Double distanceInMiles = driverLocation.distanceInMilesTo(userLocation);
+
+                                        Double distanceOneDP = (double) Math.round(distanceInMiles * 10) / 10;
+
+                                        infoTextView.setText("Your driver is " + distanceOneDP.toString() + " miles away!");
+
+                                    }
+                                }
+                            }
+                        }
+                    });
 
                     callUberButton.setVisibility(View.INVISIBLE);
 
