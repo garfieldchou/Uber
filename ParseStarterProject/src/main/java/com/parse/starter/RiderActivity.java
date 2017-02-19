@@ -98,48 +98,90 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
 
                                         Double distanceInMiles = driverLocation.distanceInMilesTo(userLocation);
 
-                                        Double distanceOneDP = (double) Math.round(distanceInMiles * 10) / 10;
+                                        if (distanceInMiles < 0.01) {
 
-                                        infoTextView.setText("Your driver is " + distanceOneDP.toString() + " miles away!");
+                                            infoTextView.setText("Your driver is here!");
 
-                                        LatLng driverLocationLatLng = new LatLng(driverLocation.getLatitude(), driverLocation.getLongitude());
+                                            ParseQuery<ParseObject> query = ParseQuery.getQuery("Request");
+                                            query.whereEqualTo("username", ParseUser.getCurrentUser().getUsername());
 
-                                        LatLng requestLocationLatLng = new LatLng(userLocation.getLatitude(), userLocation.getLongitude());
+                                            query.findInBackground(new FindCallback<ParseObject>() {
+                                                @Override
+                                                public void done(List<ParseObject> objects, ParseException e) {
 
-                                        ArrayList<Marker> markers = new ArrayList<>();
+                                                    if (e == null) {
 
-                                        markers.add(mMap.addMarker(new MarkerOptions().position(driverLocationLatLng).title("Driver Location")));
-                                        markers.add(mMap.addMarker(new MarkerOptions().position(requestLocationLatLng).title("Your Location").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))));
+                                                        for (ParseObject object : objects) {
 
-                                        LatLngBounds.Builder builder = new LatLngBounds.Builder();
-                                        for (Marker marker : markers) {
-                                            builder.include(marker.getPosition());
+                                                            object.deleteInBackground();
+
+                                                        }
+                                                    }
+                                                }
+                                            });
+
+
+                                            handler.postDelayed(new Runnable() {
+                                                @Override
+                                                public void run() {
+
+                                                    infoTextView.setText("");
+                                                    callUberButton.setVisibility(View.VISIBLE);
+                                                    callUberButton.setText("Call An Uber");
+                                                    requestActive = false;
+                                                    driverActive = false;
+
+
+                                                }
+                                            }, 5000);
+
+                                        } else {
+
+                                            Double distanceOneDP = (double) Math.round(distanceInMiles * 10) / 10;
+
+                                            infoTextView.setText("Your driver is " + distanceOneDP.toString() + " miles away!");
+
+                                            LatLng driverLocationLatLng = new LatLng(driverLocation.getLatitude(), driverLocation.getLongitude());
+
+                                            LatLng requestLocationLatLng = new LatLng(userLocation.getLatitude(), userLocation.getLongitude());
+
+                                            ArrayList<Marker> markers = new ArrayList<>();
+
+                                            mMap.clear();
+
+                                            markers.add(mMap.addMarker(new MarkerOptions().position(driverLocationLatLng).title("Driver Location")));
+                                            markers.add(mMap.addMarker(new MarkerOptions().position(requestLocationLatLng).title("Your Location").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))));
+
+                                            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                                            for (Marker marker : markers) {
+                                                builder.include(marker.getPosition());
+                                            }
+                                            LatLngBounds bounds = builder.build();
+
+                                            int padding = 250; // offset from edges of the map in pixels
+                                            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+
+                                            mMap.animateCamera(cu);
+
+                                            callUberButton.setVisibility(View.INVISIBLE);
+
+                                            handler.postDelayed(new Runnable() {
+                                                @Override
+                                                public void run() {
+
+                                                    checkForUpdates();
+
+                                                }
+                                            }, 2000);
+
                                         }
-                                        LatLngBounds bounds = builder.build();
-
-                                        int padding = 250; // offset from edges of the map in pixels
-                                        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
-
-                                        mMap.animateCamera(cu);
-
                                     }
                                 }
                             }
                         }
                     });
 
-                    callUberButton.setVisibility(View.INVISIBLE);
-
                 }
-
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-
-                        checkForUpdates();
-
-                    }
-                }, 2000);
 
             }
         });
