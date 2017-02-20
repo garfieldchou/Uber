@@ -181,6 +181,17 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
                         }
                     });
 
+                } else {
+
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            checkForUpdates();
+
+                        }
+                    }, 2000);
+
                 }
 
             }
